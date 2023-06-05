@@ -31,7 +31,6 @@ TEST_DIR = (Path(__file__).parent).resolve()
 surface_filename = str(TEST_DIR/input_name)
 
 s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s.to_vtk(OUT_DIR + "surf_plot")
 
 #Loading the coils
 coilfile = str(TEST_DIR/"./inputs/coils/coils_biot_savart_opt_maxmode3_nfp2.json")
@@ -52,17 +51,20 @@ s_plot = SurfaceRZFourier.from_vmec_input(
     surface_filename, range="full torus",
     quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta
 )
+s_plot.to_vtk(OUT_DIR + "surf_plot")
 
 # check average on-axis magnetic field strength
 calculate_on_axis_B(bs, s)
 
 #create inside surface
-s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", nphi=4*nphi, ntheta=ntheta*2)
+quadpoints_phi = np.linspace(0, 1, 4*nphi, endpoint=True)
+quadpoints_theta = np.linspace(0, 1, ntheta*2, endpoint=True)
+s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
 s_in.extend_via_projected_normal(0.1)
 s_in.to_vtk(OUT_DIR + "surface_in")
 
 #create outside surface
-s_out = SurfaceRZFourier(ntor=nphi*4, mpol=ntheta*2, nfp = s.nfp)
+s_out = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
 s_out.set_rc( 0, 0, s.get_rc(0,0))
 s_out.set_rc( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
 s_out.set_zs( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
