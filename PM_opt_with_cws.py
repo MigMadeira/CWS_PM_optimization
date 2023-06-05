@@ -57,12 +57,12 @@ s_plot = SurfaceRZFourier.from_vmec_input(
 calculate_on_axis_B(bs, s)
 
 #create inside surface
-s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
+s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", nphi=4*nphi, ntheta=ntheta*2)
 s_in.extend_via_projected_normal(0.1)
 s_in.to_vtk(OUT_DIR + "surface_in")
 
 #create outside surface
-s_out = SurfaceRZFourier(ntor=nphi*2, mpol=ntheta, nfp = s.nfp)
+s_out = SurfaceRZFourier(ntor=nphi*4, mpol=ntheta*2, nfp = s.nfp)
 s_out.set_rc( 0, 0, s.get_rc(0,0))
 s_out.set_rc( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
 s_out.set_zs( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
@@ -144,7 +144,7 @@ if save_plots:
     # Look through the solutions as function of K and make plots
     for k in range(0, kwargs["nhistory"] + 1, 50):
         mk = m_history[:, :, k].reshape(pm_opt.ndipoles * 3)
-        np.savetxt(OUT_DIR + 'result_m=' + str(int(kwargs['max_nMagnets'] / (kwargs['nhistory']) * k)) + '.txt', m_history[:, :, k].reshape(pm_opt.ndipoles * 3))
+        np.savetxt(OUT_DIR + 'result_m=' + str(int(kwargs['K'] / (kwargs['nhistory']) * k)) + '.txt', m_history[:, :, k].reshape(pm_opt.ndipoles * 3))
         b_dipole = DipoleField(
             pm_opt.dipole_grid_xyz,
             mk,
