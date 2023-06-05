@@ -57,12 +57,12 @@ s_plot = SurfaceRZFourier.from_vmec_input(
 calculate_on_axis_B(bs, s)
 
 #create inside surface
-s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
 s_in.extend_via_projected_normal(0.1)
 s_in.to_vtk(OUT_DIR + "surface_in")
 
 #create outside surface
-s_out = SurfaceRZFourier(ntor=nphi, mpol=ntheta, nfp = s.nfp)
+s_out = SurfaceRZFourier(ntor=nphi*2, mpol=ntheta, nfp = s.nfp)
 s_out.set_rc( 0, 0, s.get_rc(0,0))
 s_out.set_rc( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
 s_out.set_zs( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
@@ -110,6 +110,21 @@ plt.savefig(OUT_DIR + 'GPMO_MSE_history.png')
 min_ind = np.argmin(R2_history)
 pm_opt.m = np.ravel(m_history[:, :, min_ind])
 
+print("best result = ", 0.5 * np.sum((pm_opt.A_obj @ pm_opt.m - pm_opt.b_obj) ** 2))
+np.savetxt(OUT_DIR + 'best_result_m=' + str(int(kwargs['K'] / (kwargs['nhistory']) * min_ind )) + '.txt', m_history[:, :, min_ind ].reshape(pm_opt.ndipoles * 3))
+b_dipole = DipoleField(pm_opt.dipole_grid_xyz, m_history[:, :, min_ind ].reshape(pm_opt.ndipoles * 3),
+                       nfp=s.nfp, coordinate_flag=pm_opt.coordinate_flag, m_maxima=pm_opt.m_maxima,)
+b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
+b_dipole._toVTK(OUT_DIR + "Dipole_Fields_K" + str(int(kwargs['K'] / (kwargs['nhistory']) * min_ind)))
+bs.set_points(s_plot.gamma().reshape((-1, 3)))
+Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
+Bnormal_dipoles = np.sum(b_dipole.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=-1)
+Bnormal_total = Bnormal + Bnormal_dipoles
+# For plotting Bn on the full torus surface at the end with just the dipole fields
+make_Bnormal_plots(b_dipole, s_plot, OUT_DIR, "only_m_optimized_K" + str(int(kwargs['K'] / (kwargs['nhistory']) * min_ind)))
+pointData = {"B_N": Bnormal_total[:, :, None]}
+s_plot.to_vtk(OUT_DIR + "m_optimized_K" + str(int(kwargs['K'] / (kwargs['nhistory']) * min_ind)), extra_data=pointData)
+
 # Print effective permanent magnet volume
 M_max = 1.465 / (4 * np.pi * 1e-7)
 dipoles = pm_opt.m.reshape(pm_opt.ndipoles, 3)
@@ -129,6 +144,7 @@ if save_plots:
     # Look through the solutions as function of K and make plots
     for k in range(0, kwargs["nhistory"] + 1, 50):
         mk = m_history[:, :, k].reshape(pm_opt.ndipoles * 3)
+        np.savetxt(OUT_DIR + 'result_m=' + str(int(kwargs['max_nMagnets'] / (kwargs['nhistory']) * k)) + '.txt', m_history[:, :, k].reshape(pm_opt.ndipoles * 3))
         b_dipole = DipoleField(
             pm_opt.dipole_grid_xyz,
             mk,
@@ -149,7 +165,7 @@ if save_plots:
         s_plot.to_vtk(OUT_DIR + "m_optimized_K" + str(int(kwargs['K'] / kwargs['nhistory'] * k)), extra_data=pointData)
 
     # write solution to FAMUS-type file
-pm_opt.write_to_famus(OUT_DIR)
+pm_opt.write_to_famus(Path(OUT_DIR))
 
 # Compute metrics with permanent magnet results
 dipoles_m = pm_opt.m.reshape(pm_opt.ndipoles, 3)
