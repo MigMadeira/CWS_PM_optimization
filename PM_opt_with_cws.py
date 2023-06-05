@@ -19,11 +19,11 @@ nphi = 64 # need to set this to 64 for a real run
 ntheta = 64 # same as above
 dr = 0.03  #dr is used when using cylindrical coordinates
 #Nx = 10     #Nx is used when using cartesian coordinates
-input_name = './inputs/equilibria/input.axiTorus_nfp2_QA_final'
+input_name = './inputs/equilibria/input.axiTorus_nfp3_QA_final'
 algorithm = "baseline"
 
 # Make the output directory
-OUT_DIR = './CWS_PM_opt_nfp=2_' + algorithm + '/'
+OUT_DIR = './CWS_PM_opt_nfp=3_' + algorithm + '/'
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
@@ -33,7 +33,7 @@ surface_filename = str(TEST_DIR/input_name)
 s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 #Loading the coils
-coilfile = str(TEST_DIR/"./inputs/coils/coils_biot_savart_opt_maxmode3_nfp2.json")
+coilfile = str(TEST_DIR/"./inputs/coils/coils_biot_savart_opt_maxmode4_nfp3.json")
 bs = load(coilfile)
 coils = bs.coils
 ncoils = len(coils)
