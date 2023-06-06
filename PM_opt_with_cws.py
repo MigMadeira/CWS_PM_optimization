@@ -33,13 +33,11 @@ surface_filename = str(TEST_DIR/input_name)
 s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 #Loading the coils
-coilfile = str(TEST_DIR/"./inputs/coils/coils_biot_savart_opt_maxmode4_nfp3.json")
+coilfile = str(TEST_DIR/"./inputs/coils/biot_savart_opt_maxmode4_nfp3.json")
 bs = load(coilfile)
-coils = bs.coils
 ncoils = len(coils)
 
 # Set up BiotSavart fields
-bs = BiotSavart(coils)
 bs.set_points(s.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
 
