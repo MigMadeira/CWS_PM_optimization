@@ -5,7 +5,7 @@ import numpy as np
 from scipy.fft import rfft
 
 
-coilfile = "biot_savart_opt_maxmode4_nfp3.json"
+coilfile = "biot_savart_opt_maxmode3_nfp2.json"
 bs = load(coilfile)
 coils = bs.coils
 ncoils = len(coils)
@@ -14,7 +14,7 @@ base_currents = [coils[i].current for i in range(ncoils)]
 
 coil_data = []
 
-order = 100
+order = 16
 
 for curve in base_curves:
     xArr, yArr, zArr = np.transpose(curve.gamma())
@@ -43,7 +43,7 @@ assert coil_data.shape[1] % 6 == 0
 assert order <= coil_data.shape[0]-1
 
 num_coils = coil_data.shape[1] // 6
-ppp = 20
+ppp = 16
 
 curves = [CurveXYZFourier(order*ppp, order) for i in range(num_coils)]
 for ic in range(num_coils):

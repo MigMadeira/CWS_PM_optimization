@@ -19,7 +19,7 @@ nphi = 64 # need to set this to 64 for a real run
 ntheta = 64 # same as above
 dr = 0.03  #dr is used when using cylindrical coordinates
 #Nx = 10     #Nx is used when using cartesian coordinates
-input_name = './inputs/equilibria/input.axiTorus_nfp3_QA_final'
+input_name = './inputs/equilibria/input.maxmode4_nfp3'
 algorithm = "baseline"
 
 # Make the output directory
@@ -35,7 +35,7 @@ s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi
 #Loading the coils
 coilfile = str(TEST_DIR/"./inputs/coils/biot_savart_opt_maxmode4_nfp3.json")
 bs = load(coilfile)
-ncoils = len(coils)
+ncoils = len(bs.coils)
 
 # Set up BiotSavart fields
 bs.set_points(s.gamma().reshape((-1, 3)))
@@ -186,8 +186,8 @@ b_dipole = DipoleField(
 b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
-f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
-print('f_B = ', f_B_sf)
+#f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
+#print('f_B = ', f_B_sf)
 B_max = 1.465
 mu0 = 4 * np.pi * 1e-7
 total_volume = np.sum(np.sqrt(np.sum(pm_opt.m.reshape(pm_opt.ndipoles, 3) ** 2, axis=-1))) * s.nfp * 2 * mu0 / B_max
