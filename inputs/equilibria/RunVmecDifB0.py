@@ -18,21 +18,20 @@ def append_to_line(f, i, text):
 mpi = MpiPartition()
 ntheta_VMEC = 91
 nphi_VMEC = 91
-nfp = 3
+nfp = 2
 
 
-#PHIEDGE = [51.4468222437525*(5.86461221551616/7.20365943683029)*(5.86461221551616/6.63564378514194)*(5.86461221551616/4.17268821636527)] #for nfp = 2
-PHIEDGE = [(5.86461221551616/0.0286763093880935)*(5.86461221551616/28.0924832823698)*(5.86461221551616/4.76507020714505)] #for nfp = 3
+PHIEDGE = [51.4468222437525*(5.86461221551616/1.01405906647965)*(5.86461221551616/33.8031872281897)] #for nfp = 2
+#PHIEDGE = [(5.86461221551616/0.999619663142818)*(5.86461221551616/0.654457178533868)] #for nfp = 3
 
 results_path = os.path.join(os.path.dirname(__file__), 'scaled_equilibria')
 Path(results_path).mkdir(parents=True, exist_ok=True)
 
 
-vmec = Vmec('input.axiTorus_nfp3_QA_final', mpi=mpi, verbose=True, ntheta=ntheta_VMEC, nphi=nphi_VMEC*2*nfp)
-#vmec.run()
+vmec = Vmec('input.maxmode3_nfp2', mpi=mpi, verbose=True, ntheta=ntheta_VMEC, nphi=nphi_VMEC*2*nfp)
 
-rescale = (1.7/1.204463152647128e-01)*(1.7/1.53237099489138) #Aries has a 1.7 minor radius and our equilibrium has 1.204463152647128e-01 for nfp=3
-#rescale = (1.7/1.281195487052332e-01) * (1.7/1.43396066633058) #1.281195487052332e-01 for nfp=2
+rescale = (1.7/0.10780687303734) #Aries has a 1.7 minor radius and our equilibrium has 0.10780687303734 for nfp=2
+#rescale = (1.7/0.108681855858562) #0.108681855858562 for nfp=3
 
 print(vmec.boundary.rc.shape[0])
      
@@ -42,7 +41,7 @@ for m in range(vmec.boundary.mpol):
         vmec.boundary.set_rc(m,n,rescale*vmec.boundary.get_rc(m,n)) 
         vmec.boundary.set_zs(m,n,rescale*vmec.boundary.get_zs(m,n)) 
 
-filename = 'input.axiTorus_nfp3_QA_final_scaled_AriesCS' 
+filename = 'input.maxmode3_nfp2_scaled_AriesCS' 
 
 os.chdir(results_path)
 
@@ -60,3 +59,10 @@ for phi_edge in PHIEDGE:
     os.remove(filename + '_copy')
 
   
+for objective_file in glob.glob(f"jac_*"): os.remove(objective_file)
+for objective_file in glob.glob(f"jac_*"): os.remove(objective_file)
+for objective_file in glob.glob(f"objective_*"): os.remove(objective_file)
+for objective_file in glob.glob(f"residuals_*"): os.remove(objective_file)
+for objective_file in glob.glob(f"*000_*"): os.remove(objective_file)
+for objective_file in glob.glob(f"parvmec*"): os.remove(objective_file)
+for objective_file in glob.glob(f"threed*"): os.remove(objective_file)
