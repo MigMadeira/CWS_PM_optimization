@@ -63,9 +63,9 @@ quadpoints_theta = np.linspace(0, 1, ntheta*2, endpoint=True)
 
 s_in = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
 s_in.set_rc( 0, 0, s.get_rc(0,0))
-s_in.set_rc( 1, 0, 0.4)   #The winding surface has a radius of 0.55
-s_in.set_zs( 1, 0, 0.4)   #The winding surface has a radius of 0.55
-s_in.to_vtk(OUT_DIR + "surface_out")
+s_in.set_rc( 1, 0, 0.42)   #The winding surface has a radius of 0.55
+s_in.set_zs( 1, 0, 0.42)   #The winding surface has a radius of 0.55
+s_in.to_vtk(OUT_DIR + "surface_in")
 #create outside surface
 s_out = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
 s_out.set_rc( 0, 0, s.get_rc(0,0))
