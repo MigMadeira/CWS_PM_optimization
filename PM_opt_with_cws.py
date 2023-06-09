@@ -19,11 +19,11 @@ nphi = 64 # need to set this to 64 for a real run
 ntheta = 64 # same as above
 dr = 0.03  #dr is used when using cylindrical coordinates
 #Nx = 10     #Nx is used when using cartesian coordinates
-input_name = './inputs/equilibria/input.maxmode4_nfp3'
+input_name = './inputs/equilibria/input.maxmode3_nfp2'
 algorithm = "baseline"
 
 # Make the output directory
-OUT_DIR = './CWS_PM_opt_nfp=3_' + algorithm + '/'
+OUT_DIR = './CWS_PM_opt_nfp=2_' + algorithm + '_s_in_0.4/'
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
@@ -33,7 +33,7 @@ surface_filename = str(TEST_DIR/input_name)
 s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 #Loading the coils
-coilfile = str(TEST_DIR/"./inputs/coils/biot_savart_opt_maxmode4_nfp3.json")
+coilfile = str(TEST_DIR/"./inputs/coils/biot_savart_opt_maxmode3_nfp2.json")
 bs = load(coilfile)
 ncoils = len(bs.coils)
 
@@ -57,17 +57,21 @@ calculate_on_axis_B(bs, s)
 #create inside surface
 quadpoints_phi = np.linspace(0, 1, 4*nphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, ntheta*2, endpoint=True)
-s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
-s_in.extend_via_projected_normal(0.1)
-s_in.to_vtk(OUT_DIR + "surface_in")
+#s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+#s_in.extend_via_projected_normal(0.3)
+#s_in.to_vtk(OUT_DIR + "surface_in")
 
+s_in = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
+s_in.set_rc( 0, 0, s.get_rc(0,0))
+s_in.set_rc( 1, 0, 0.4)   #The winding surface has a radius of 0.55
+s_in.set_zs( 1, 0, 0.4)   #The winding surface has a radius of 0.55
+s_in.to_vtk(OUT_DIR + "surface_out")
 #create outside surface
 s_out = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
 s_out.set_rc( 0, 0, s.get_rc(0,0))
 s_out.set_rc( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
 s_out.set_zs( 1, 0, 0.55 - 0.1)   #The winding surface has a radius of 0.55
 s_out.to_vtk(OUT_DIR + "surface_out")
-
 
 #initialize the permanent magnet class
 kwargs_geo = {"dr": dr, "coordinate_flag": "cylindrical"}  
@@ -80,7 +84,7 @@ print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs('GPMO')
-kwargs['K'] = 29500
+kwargs['K'] = 7500
 kwargs['nhistory'] = 500
 
 if algorithm == 'backtracking':
