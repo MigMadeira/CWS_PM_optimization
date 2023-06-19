@@ -64,13 +64,13 @@ class Results:
             for key, value in vars(self).items():
                 file.write(f"{key}: {value}\n")
 
-#OUT_DIR = "./coil_output/nfp2_rescaled_Aries_CWS_1.307/"                
-OUT_DIR = "./coil_output/nfp3_rescaled_Aries_CWS_2/"
+OUT_DIR = "./coil_output/nfp2_rescaled_Aries_CWS_2.207_5/"                
+#OUT_DIR = "./coil_output/nfp3_rescaled_Aries_CWS/"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
-#wout_name = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_AriesCS_PHIEDGE=51.61979227917805.nc'
-wout_name = './inputs/equilibria/scaled_equilibria/wout_maxmode4_nfp3_scaled_AriesCS_PHIEDGE=52.57297761698136.nc'
+wout_name = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_AriesCS_PHIEDGE=51.61979227917805.nc'
+#wout_name = './inputs/equilibria/scaled_equilibria/wout_maxmode4_nfp3_scaled_AriesCS_PHIEDGE=52.57297761698136.nc'
 TEST_DIR = (Path(__file__).parent).resolve()
 surface_filename = str(TEST_DIR/wout_name)
 
@@ -80,8 +80,8 @@ MAXITER = 100000
 
 
 
-ntheta = 64
-nphi = 32
+ntheta = 50
+nphi = 42
 
 
 mpol = 1
@@ -95,33 +95,36 @@ s_full = SurfaceRZFourier.from_wout(surface_filename, range="full torus", ntheta
 #cws = SurfaceRZFourier.from_nphi_ntheta(nphi, ntheta, "half period", s.nfp, mpol=mpol, ntor=ntor)
 #cws_full = SurfaceRZFourier.from_nphi_ntheta(int(nphi*2*s.nfp), ntheta, "full torus", s.nfp, mpol=mpol, ntor=ntor)
 cws  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-cws.extend_via_projected_normal(2)
+cws.extend_via_projected_normal(2.207)
 cws_full = SurfaceRZFourier.from_wout(surface_filename, range="full torus", nphi=nphi, ntheta=ntheta)
-cws_full.extend_via_projected_normal(2)
+cws_full.extend_via_projected_normal(2.207)
 
 if s.nfp==2:
     ncoils = 3
     
     # Threshold and weight for the maximum length of each individual coil:
-    LENGTH_THRESHOLD = 80
-    LENGTH_WEIGHT = 1
+    #LENGTH_THRESHOLD = 7.5*(8.65/0.55)
+    LENGTH_THRESHOLD = 90
+    LENGTH_WEIGHT = 1e-6
+    LENGTH_CON_WEIGHT = 0.1 
 
     # Threshold and weight for the coil-to-coil distance penalty in the objective function:
-    CC_THRESHOLD = 0.5
+    CC_THRESHOLD = 0.1*(8.65/0.55)
     CC_WEIGHT = 10
 
     # Threshold and weight for the curvature penalty in the objective function:
-    CURVATURE_THRESHOLD = 2.6
-    CURVATURE_WEIGHT = 10
+    CURVATURE_THRESHOLD = 32/(8.65/0.55)
+    CURVATURE_WEIGHT = 8
     
     # Threshold and weight for the mean squared curvature penalty in the objective function:
-    MSC_THRESHOLD = 0.4
-    MSC_WEIGHT = 10
-
-    ARCLENGTH_WEIGHT = 1e-1
+    #MSC_THRESHOLD = 32/(8.65/0.55)**2
+    MSC_THRESHOLD = 1.5
+    MSC_WEIGHT = 1e-2
+    
+    ARCLENGTH_WEIGHT = 5e-8
     
     order = 16  # order of dofs of cws curves
-    quadpoints = 260*2
+    quadpoints = 300
     
     tolerance = 1e-20
 elif s.nfp ==3:
@@ -129,7 +132,8 @@ elif s.nfp ==3:
     # Threshold and weight for the maximum length of each individual coil:
     LENGTH_THRESHOLD = 36
     LENGTH_WEIGHT = 1
-
+    LENGTH_CON_WEIGHT = 0.1 
+    
     # Threshold and weight for the coil-to-coil distance penalty in the objective function:
     CC_THRESHOLD = 1.0
     CC_WEIGHT = 100
@@ -149,8 +153,9 @@ elif s.nfp ==3:
     
     tolerance = 1e-20
 
-R0 = s.get_rc(0, 0) - 1
-R1 = s.get_zs(1, 0) + 3.5
+R0 = s.get_rc(0, 0)
+##R1 = s.get_zs(1, 0) + 3.5
+R1 = 2.207
 #cws.rc[0, 0] = R0
 #cws.rc[1, 0] = R1
 #cws.zs[1, 0] = R1
@@ -193,7 +198,8 @@ def create_cws_from_dofs(dofs_cws=cws.x, dofs_coils=None):
     Jals = [ArclengthVariation(c) for c in base_curves]
     JF = (
         Jf
-        + LENGTH_WEIGHT * sum(QuadraticPenalty(J, LENGTH_THRESHOLD) for J in Jls)
+        + LENGTH_WEIGHT * sum(Jls)
+        + LENGTH_CON_WEIGHT * sum(QuadraticPenalty(J, LENGTH_THRESHOLD) for J in Jls)
         + CC_WEIGHT * Jccdist
         + CURVATURE_WEIGHT * sum(Jcs)
         + MSC_WEIGHT * sum(QuadraticPenalty(J, MSC_THRESHOLD) for J in Jmscs)
@@ -245,7 +251,7 @@ res = minimize(
     fun,
     dofs,
     jac=True,
-    method="BFGS",
+    method="L-BFGS-B",
     #options={"maxiter": MAXITER},
     tol=tolerance,
 )
@@ -257,6 +263,7 @@ pointData = {"B_N": np.sum(bs.B().reshape((int(nphi*2*s_full.nfp), ntheta, 3)) *
 s_full.to_vtk(OUT_DIR + "surf_opt", extra_data=pointData)
 cws_full.to_vtk(OUT_DIR + "cws_opt")
 bs.set_points(s.gamma().reshape((-1, 3)))
+bs.save(OUT_DIR + "biot_savart_opt.json")
 
 B_dot_n = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
 BdotN = np.mean(np.abs(B_dot_n))
