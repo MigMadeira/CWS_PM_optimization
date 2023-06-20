@@ -20,11 +20,11 @@ ntheta = 64 # same as above
 dr = 0.12  #dr is used when using cylindrical coordinates
 dz = 0.12
 
-input_name = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_AriesCS_PHIEDGE=51.61979227917805.nc'
+input_name = './inputs/equilibria/scaled_equilibria/wout_maxmode4_nfp3_scaled_AriesCS_PHIEDGE=52.57297761698136.nc'
 algorithm = "baseline"
 
 # Make the output directory
-OUT_DIR = './CWS_PM_opt_nfp=2_scaled_' + algorithm +'/' 
+OUT_DIR = './CWS_PM_opt_nfp=3_scaled_' + algorithm +'_s_out=1.597/' 
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
@@ -34,7 +34,7 @@ surface_filename = str(TEST_DIR/input_name)
 s = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 #Loading the coils
-coilfile = str(TEST_DIR/"./coil_output/nfp2_rescaled_Aries_CWS_2.207_4/biot_savart_opt.json")
+coilfile = str(TEST_DIR/"./coil_output/nfp3_rescaled_Aries_CWS_1.697/biot_savart_opt.json")
 bs = load(coilfile)
 ncoils = len(bs.coils)
 
@@ -75,7 +75,7 @@ s_in.to_vtk(OUT_DIR + "surface_in")
 #s_out.set_rc( 1, 0, 0.55 - 0.1)   
 #s_out.set_zs( 1, 0, 0.55 - 0.1) 
 s_out  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_out.extend_via_projected_normal(1.807)    
+s_out.extend_via_projected_normal(1.597)    
 s_out.to_vtk(OUT_DIR + "surface_out")
 
 #initialize the permanent magnet class
@@ -88,7 +88,7 @@ print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs('GPMO')
-kwargs['K'] = 48000
+kwargs['K'] = 25000
 kwargs['nhistory'] = 500
 
 if algorithm == 'backtracking':
