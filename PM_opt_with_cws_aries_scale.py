@@ -24,7 +24,7 @@ input_name = './inputs/equilibria/scaled_equilibria/wout_maxmode4_nfp3_scaled_Ar
 algorithm = "baseline"
 
 # Make the output directory
-OUT_DIR = './CWS_PM_opt_nfp=3_scaled_' + algorithm +'_s_out=1.597/' 
+OUT_DIR = './CWS_PM_opt_nfp=3_scaled_' + algorithm +'_s_out=1.597_2/' 
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
@@ -58,7 +58,7 @@ calculate_on_axis_B(bs, s)
 #create inside surface
 quadpoints_phi = np.linspace(0, 1, 4*nphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, ntheta*2, endpoint=True)
-#s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+s_in = SurfaceRZFourier.from_wout(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
 #s_in.extend_via_projected_normal(0.3)
 #s_in.to_vtk(OUT_DIR + "surface_in")
 
@@ -66,7 +66,7 @@ quadpoints_theta = np.linspace(0, 1, ntheta*2, endpoint=True)
 #s_in.set_rc( 0, 0, s.get_rc(0,0))
 #s_in.set_rc( 1, 0, 0.42)  
 #s_in.set_zs( 1, 0, 0.42)
-s_in  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+#s_in  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 s_in.extend_via_projected_normal(1.307)  
 s_in.to_vtk(OUT_DIR + "surface_in")
 #create outside surface
@@ -74,7 +74,8 @@ s_in.to_vtk(OUT_DIR + "surface_in")
 #s_out.set_rc( 0, 0, s.get_rc(0,0))
 #s_out.set_rc( 1, 0, 0.55 - 0.1)   
 #s_out.set_zs( 1, 0, 0.55 - 0.1) 
-s_out  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+#s_out  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s_out = SurfaceRZFourier.from_wout(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
 s_out.extend_via_projected_normal(1.597)    
 s_out.to_vtk(OUT_DIR + "surface_out")
 
