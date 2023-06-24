@@ -39,7 +39,7 @@ def optimization_settings(LENGTH_THRESHOLD_, LENGTH_WEIGHT_, CC_THRESHOLD_, CC_W
  MSC_THRESHOLD, MSC_WEIGHT, ARCLENGTH_WEIGHT, 
  LENGTH_CON_WEIGHT, MAXITER) = optimization_settings(20, 1e-8, 0.1, 100, 60, 1e-5, 20, 1e-9, 3e-8, 0.1, 500)
 
-OUT_DIR = "./evn_sweeping_nfp=2/"
+OUT_DIR = "./W7-X/"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 ncoils = 3
@@ -49,7 +49,9 @@ ntheta = 50
 nphi = 42
 
 #wout = './inputs/equilibria/scaled_equilibria/wout_maxmode4_nfp3_scaled_AriesCS_PHIEDGE=52.57297761698136.nc'
-wout = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_AriesCS_PHIEDGE=51.61979227917805.nc'
+#wout = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_AriesCS_PHIEDGE=51.61979227917805.nc'
+wout = './inputs/equilibria/wout_W7-X_standard_configuration.nc'
+
 # CREATE FLUX SURFACE
 s = SurfaceRZFourier.from_wout(wout, range="half period", ntheta=ntheta, nphi=nphi)
 s_full = SurfaceRZFourier.from_wout(wout, range="full torus", ntheta=ntheta, nphi=int(nphi*2*s.nfp))
@@ -90,13 +92,14 @@ def cws_and_curves(factor):
 #factor_values = np.arange(0.247, 0.261, 0.0005)
 #factor_values = np.arange(0.1, 0.4, 0.002)
 
-factor_values = np.arange(1.307, 4.307, 0.1)
-
+#factor_values = np.arange(1.307, 4.307, 0.1)
+#factor_values = np.arange(0.1, 2.0, 0.1)
+factor_values = np.arange(0.5, 0.7, 0.02)
 
 J_values = []
 
 for i in factor_values:
-    OUT_DIR2 = f"./evn_sweeping_nfp=2/{i:.5f}/"
+    OUT_DIR2 = f"./W7-X/coil_data/{i:.5f}/"
     os.makedirs(OUT_DIR2, exist_ok=True)
     cws, cws_full, base_curves, base_currents = cws_and_curves(i)
 
@@ -161,9 +164,9 @@ plt.title("Extend via normal factor variation")
 plt.xlabel("extend_via_normal factor")
 plt.ylabel("JF.J()")
 
-plt.savefig(f"{OUT_DIR}opt_evn_factor.png")
+plt.savefig(f"{OUT_DIR}opt_CWS_scan_finer.png")
 #plt.show()
 
 data = np.column_stack([factor_values, J_values])
-datafile_path = OUT_DIR + "data.txt"
+datafile_path = OUT_DIR + "data_finer.txt"
 np.savetxt(datafile_path , data, fmt=['%f','%e'])
