@@ -20,7 +20,7 @@ ntheta = 64 # same as above
 dr = 0.12  #dr is used when using cylindrical coordinates
 dz = 0.12
 
-input_name = './inputs/equilibria/scaled_equilibria/wout_maxmode4_nfp3_scaled_AriesCS_PHIEDGE=52.57297761698136.nc'
+input_name = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_AriesCS_PHIEDGE=51.61979227917805.nc'
 algorithm = "baseline"
 
 # Make the output directory
@@ -55,28 +55,35 @@ s_plot.to_vtk(OUT_DIR + "surf_plot")
 # check average on-axis magnetic field strength
 calculate_on_axis_B(bs, s)
 
-#create inside surface
+
 quadpoints_phi = np.linspace(0, 1, 4*nphi, endpoint=True)
-quadpoints_theta = np.linspace(0, 1, ntheta*2, endpoint=True)
-s_in = SurfaceRZFourier.from_wout(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
-#s_in.extend_via_projected_normal(0.3)
-#s_in.to_vtk(OUT_DIR + "surface_in")
+quadpoints_theta = np.linspace(0, 1, 2*ntheta, endpoint=True)
+
+#create inside surface
+s_in = SurfaceRZFourier.from_wout(surface_filename,quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+s_in.extend_via_projected_normal(1.307)  
+s_in.to_vtk(OUT_DIR + "surface_in")
 
 #s_in = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
 #s_in.set_rc( 0, 0, s.get_rc(0,0))
 #s_in.set_rc( 1, 0, 0.42)  
 #s_in.set_zs( 1, 0, 0.42)
 #s_in  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_in.extend_via_projected_normal(1.307)  
-s_in.to_vtk(OUT_DIR + "surface_in")
+#s_in.extend_via_projected_normal(1.307)  
+#s_in.to_vtk(OUT_DIR + "surface_in")
 #create outside surface
 #s_out = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
 #s_out.set_rc( 0, 0, s.get_rc(0,0))
 #s_out.set_rc( 1, 0, 0.55 - 0.1)   
 #s_out.set_zs( 1, 0, 0.55 - 0.1) 
 #s_out  = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
-s_out = SurfaceRZFourier.from_wout(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
-s_out.extend_via_projected_normal(1.597)    
+#s_out = SurfaceRZFourier.from_wout(surface_filename, range="full torus", quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+#s_out.extend_via_projected_normal(1.597)    
+#s_out.to_vtk(OUT_DIR + "surface_out")
+
+#create outside surface
+s_out = SurfaceRZFourier.from_wout(surface_filename,quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
+s_out.extend_via_projected_normal(1.807)    
 s_out.to_vtk(OUT_DIR + "surface_out")
 
 #initialize the permanent magnet class
@@ -89,7 +96,7 @@ print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs('GPMO')
-kwargs['K'] = 25000
+kwargs['K'] = 48000
 kwargs['nhistory'] = 500
 
 if algorithm == 'backtracking':
