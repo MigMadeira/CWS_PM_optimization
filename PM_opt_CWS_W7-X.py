@@ -30,7 +30,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 TEST_DIR = (Path(__file__).parent).resolve()
 surface_filename = str(TEST_DIR/input_name)
 
-s = SurfaceRZFourier.from_vmec_input(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
+s = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 s.to_vtk(OUT_DIR + "surf_plot")
 
 #Loading the coils
@@ -48,7 +48,7 @@ Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
 qphi = 2 * nphi
 quadpoints_phi = np.linspace(0, 1, qphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, ntheta, endpoint=True)
-s_plot = SurfaceRZFourier.from_vmec_input(
+s_plot = SurfaceRZFourier.from_wout(
     surface_filename, range="full torus",
     quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta
 )
@@ -57,13 +57,13 @@ s_plot = SurfaceRZFourier.from_vmec_input(
 calculate_on_axis_B(bs, s)
 
 #create inside surface
-s_in = SurfaceRZFourier.from_vmec_input(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
+s_in = SurfaceRZFourier.from_wout(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
 s_in.extend_via_projected_normal(0.25)
 s_in.to_vtk(OUT_DIR + "surface_in")
 
 #create outside surface
-s_out = SurfaceRZFourier(ntor=nphi*2, mpol=ntheta, nfp = s.nfp)
-s_out.extend_via_projected_normal(0.52 - 0.1)
+s_out = SurfaceRZFourier.from_wout(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
+s_out.extend_via_projected_normal(0.52 - 0.09)
 s_out.to_vtk(OUT_DIR + "surface_out")
 
 
@@ -74,11 +74,11 @@ pm_opt = PermanentMagnetGrid.geo_setup_between_toroidal_surfaces(
 )
 
 print('Number of available dipoles = ', pm_opt.ndipoles)
-exit()
+
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs('GPMO')
-kwargs['K'] = 29500
-kwargs['nhistory'] = 500
+kwargs['K'] = 17200
+kwargs['nhistory'] = 400
 
 if algorithm == 'backtracking':
     kwargs['backtracking'] = 100  # How often to perform the backtrackinig
@@ -139,9 +139,9 @@ if save_plots:
     make_Bnormal_plots(bs, s_plot, OUT_DIR, "biot_savart_optimized")
 
     # Look through the solutions as function of K and make plots
-    for k in range(0, kwargs["nhistory"] + 1, 50):
+    for k in range(0, kwargs["nhistory"] + 1, 40):
         mk = m_history[:, :, k].reshape(pm_opt.ndipoles * 3)
-        np.savetxt(OUT_DIR + 'result_m=' + str(int(kwargs['max_nMagnets'] / (kwargs['nhistory']) * k)) + '.txt', m_history[:, :, k].reshape(pm_opt.ndipoles * 3))
+        np.savetxt(OUT_DIR + 'result_m=' + str(int(kwargs['K'] / (kwargs['nhistory']) * k)) + '.txt', m_history[:, :, k].reshape(pm_opt.ndipoles * 3))
         b_dipole = DipoleField(
             pm_opt.dipole_grid_xyz,
             mk,
@@ -183,8 +183,8 @@ b_dipole = DipoleField(
 b_dipole.set_points(s_plot.gamma().reshape((-1, 3)))
 bs.set_points(s_plot.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
-f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
-print('f_B = ', f_B_sf)
+#f_B_sf = SquaredFlux(s_plot, b_dipole, -Bnormal).J()
+#print('f_B = ', f_B_sf)
 B_max = 1.465
 mu0 = 4 * np.pi * 1e-7
 total_volume = np.sum(np.sqrt(np.sum(pm_opt.m.reshape(pm_opt.ndipoles, 3) ** 2, axis=-1))) * s.nfp * 2 * mu0 / B_max
