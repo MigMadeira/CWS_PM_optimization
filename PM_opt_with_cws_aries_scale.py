@@ -24,7 +24,7 @@ input_name = './inputs/equilibria/scaled_equilibria/wout_maxmode3_nfp2_scaled_Ar
 algorithm = "baseline"
 
 # Make the output directory
-OUT_DIR = './CWS_PM_opt_nfp=3_scaled_' + algorithm +'_s_out=1.597_2/' 
+OUT_DIR = './CWS_PM_opt_nfp=2_scaled_fixed_current' + algorithm +'_s_out=2.107/' 
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
@@ -34,7 +34,7 @@ surface_filename = str(TEST_DIR/input_name)
 s = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi, ntheta=ntheta)
 
 #Loading the coils
-coilfile = str(TEST_DIR/"./coil_output/nfp3_rescaled_Aries_CWS_1.697/biot_savart_opt.json")
+coilfile = str(TEST_DIR/"./coil_output/nfp2_rescaled_Aries_CWS_2.107/biot_savart_opt.json")
 bs_wrong_currents = load(coilfile)
 ncoils = len(bs_wrong_currents.coils)
 
@@ -92,8 +92,13 @@ s_in.to_vtk(OUT_DIR + "surface_in")
 #s_out.to_vtk(OUT_DIR + "surface_out")
 
 #create outside surface
+if s.nfp == 2:
+    ws = 2.107
+else:
+    ws = 1.597
+
 s_out = SurfaceRZFourier.from_wout(surface_filename,quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
-s_out.extend_via_projected_normal(1.597)    
+s_out.extend_via_projected_normal(ws)    
 s_out.to_vtk(OUT_DIR + "surface_out")
 
 #initialize the permanent magnet class
