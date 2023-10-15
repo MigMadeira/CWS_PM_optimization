@@ -35,8 +35,19 @@ s = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi,
 
 #Loading the coils
 coilfile = str(TEST_DIR/"./coil_output/nfp3_rescaled_Aries_CWS_1.697/biot_savart_opt.json")
-bs = load(coilfile)
-ncoils = len(bs.coils)
+bs_wrong_currents = load(coilfile)
+ncoils = len(bs_wrong_currents.coils)
+
+scaling = 188.6743289
+    
+#fix the current
+coils = bs_wrong_currents.coils
+base_curves = [coils[i].curve for i in range(ncoils)]
+base_currents = [coils[i].current*scaling for i in range(ncoils)]
+fixed_coils = []
+for i in range(ncoils):
+    fixed_coils.append(Coil(base_curves[i], base_currents[i]))
+bs = BiotSavart(fixed_coils)
 
 # Set up BiotSavart fields
 bs.set_points(s.gamma().reshape((-1, 3)))
@@ -54,7 +65,6 @@ s_plot.to_vtk(OUT_DIR + "surf_plot")
 
 # check average on-axis magnetic field strength
 calculate_on_axis_B(bs, s)
-
 
 quadpoints_phi = np.linspace(0, 1, 4*nphi, endpoint=True)
 quadpoints_theta = np.linspace(0, 1, 2*ntheta, endpoint=True)
@@ -83,7 +93,7 @@ s_in.to_vtk(OUT_DIR + "surface_in")
 
 #create outside surface
 s_out = SurfaceRZFourier.from_wout(surface_filename,quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta)
-s_out.extend_via_projected_normal(1.807)    
+s_out.extend_via_projected_normal(1.597)    
 s_out.to_vtk(OUT_DIR + "surface_out")
 
 #initialize the permanent magnet class
@@ -96,7 +106,7 @@ print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs('GPMO')
-kwargs['K'] = 48000
+kwargs['K'] = 25500 #48000
 kwargs['nhistory'] = 500
 
 if algorithm == 'backtracking':

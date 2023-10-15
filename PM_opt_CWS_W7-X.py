@@ -17,13 +17,13 @@ from simsopt.objectives import SquaredFlux
 # Set some parameters
 nphi = 64 # need to set this to 64 for a real run
 ntheta = 64 # same as above
-dr = 0.06  #dr is used when using cylindrical coordinates
+dr = 0.055  #dr is used when using cylindrical coordinates
 
 input_name = './inputs/equilibria/wout_W7-X_standard_configuration.nc'
 algorithm = "baseline"
 
 # Make the output directory
-OUT_DIR = "./W7-X/PM_opt/N=4_k=2/"   
+OUT_DIR = "./W7-X/PM_opt/N=4_k=2.7_circularCWS/"   
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Read in the plasma equilibrium file
@@ -34,13 +34,23 @@ s = SurfaceRZFourier.from_wout(surface_filename, range="half period", nphi=nphi,
 s.to_vtk(OUT_DIR + "surf_plot")
 
 #Loading the coils
-coilfile = str(TEST_DIR/"./W7-X/coil_output/N=4_k=2/biot_savart_opt.json")
-bs = load(coilfile)
-coils = bs.coils
-ncoils = len(coils)
+coilfile = str(TEST_DIR/"./W7-X/coil_output/N=4_k=2.7_circularCWS/biot_savart_opt.json")
+bs_wrong_currents = load(coilfile)
+ncoils = len(bs_wrong_currents.coils)
+
+scaling = 19.85831176
+    
+#fix the current
+coils = bs_wrong_currents.coils
+base_curves = [coils[i].curve for i in range(ncoils)]
+base_currents = [coils[i].current*scaling for i in range(ncoils)]
+fixed_coils = []
+for i in range(ncoils):
+    fixed_coils.append(Coil(base_curves[i], base_currents[i]))
+bs = BiotSavart(fixed_coils)
+
 
 # Set up BiotSavart fields
-bs = BiotSavart(coils)
 bs.set_points(s.gamma().reshape((-1, 3)))
 Bnormal = np.sum(bs.B().reshape((nphi, ntheta, 3)) * s.unitnormal(), axis=2)
 
@@ -58,14 +68,15 @@ calculate_on_axis_B(bs, s)
 
 #create inside surface
 s_in = SurfaceRZFourier.from_wout(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
-s_in.extend_via_projected_normal(0.25)
+s_in.extend_via_projected_normal(0.1)
 s_in.to_vtk(OUT_DIR + "surface_in")
 
 #create outside surface
-s_out = SurfaceRZFourier.from_wout(surface_filename, range="full torus", nphi=2*nphi, ntheta=ntheta)
-s_out.extend_via_projected_normal(0.52 - 0.09)
+s_out = SurfaceRZFourier(quadpoints_phi=quadpoints_phi, quadpoints_theta=quadpoints_theta, nfp = s.nfp)
+s_out.set_rc( 0, 0, s.get_rc(0,0))
+s_out.set_rc( 1, 0, 1.25 - 0.1)   
+s_out.set_zs( 1, 0, 1.25 - 0.1)    
 s_out.to_vtk(OUT_DIR + "surface_out")
-
 
 #initialize the permanent magnet class
 kwargs_geo = {"dr": dr, "coordinate_flag": "cylindrical"}  
@@ -77,8 +88,8 @@ print('Number of available dipoles = ', pm_opt.ndipoles)
 
 # Set some hyperparameters for the optimization
 kwargs = initialize_default_kwargs('GPMO')
-kwargs['K'] = 17200
-kwargs['nhistory'] = 400
+kwargs['K'] = 55200 #17200
+kwargs['nhistory'] = 480
 
 if algorithm == 'backtracking':
     kwargs['backtracking'] = 100  # How often to perform the backtrackinig
@@ -133,13 +144,15 @@ if save_plots:
     # Save the MSE history and history of the m vectors
     #np.savetxt(OUT_DIR + 'mhistory_K' + str(kwargs['K']) + '_nphi' + str(nphi) + '_ntheta' + str(ntheta) + '.txt', m_history.reshape(pm_opt.ndipoles * 3, kwargs['nhistory'] + 1)) #this file occupies alot of space ~2gb, use with care
     np.savetxt(OUT_DIR + 'R2history_K' + str(kwargs['K']) + '_nphi' + str(nphi) + '_ntheta' + str(ntheta) + '.txt', R2_history)
+    np.savetxt(OUT_DIR + 'Bnhistory_K' + str(kwargs['K']) + '_nphi' + str(nphi) + '_ntheta' + str(ntheta) + '.txt', Bn_history)
+    
     # Plot the SIMSOPT GPMO solution
     bs.set_points(s_plot.gamma().reshape((-1, 3)))
     Bnormal = np.sum(bs.B().reshape((qphi, ntheta, 3)) * s_plot.unitnormal(), axis=2)
     make_Bnormal_plots(bs, s_plot, OUT_DIR, "biot_savart_optimized")
 
     # Look through the solutions as function of K and make plots
-    for k in range(0, kwargs["nhistory"] + 1, 40):
+    for k in range(0, kwargs["nhistory"] + 1, 48):
         mk = m_history[:, :, k].reshape(pm_opt.ndipoles * 3)
         np.savetxt(OUT_DIR + 'result_m=' + str(int(kwargs['K'] / (kwargs['nhistory']) * k)) + '.txt', m_history[:, :, k].reshape(pm_opt.ndipoles * 3))
         b_dipole = DipoleField(
